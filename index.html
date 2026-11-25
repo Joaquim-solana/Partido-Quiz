@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz dos símbolos dos partidos</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f1ff;--card:#fff;--ink:#1d1b2e;--mute:#6b6880;--brand:#6c4cf5;--ok:#1fa968;--bad:#e5484d;--line:#e2dcf7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14122a;--card:#201d3d;--ink:#f1eeff;--mute:#a7a2c9;--brand:#8b72ff;--ok:#2fd085;--bad:#ff6b70;--line:#34305e}}
+:root[data-theme="dark"]{--bg:#14122a;--card:#201d3d;--ink:#f1eeff;--mute:#a7a2c9;--brand:#8b72ff;--ok:#2fd085;--bad:#ff6b70;--line:#34305e}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{background:radial-gradient(circle at 20% 0%,rgba(108,76,245,.18),transparent 50%),var(--bg);display:flex;justify-content:center;padding:16px}
+.app{width:100%;max-width:520px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.bar{flex:1;height:10px;background:var(--line);border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),#ff8a3d);transition:width .5s}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-weight:700;font-size:14px;white-space:nowrap}
+#mute{cursor:pointer;font-size:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 10px 30px rgba(60,40,140,.15);animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.94)}to{opacity:1;transform:none}}
+.stage{height:190px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:linear-gradient(135deg,rgba(108,76,245,.12),rgba(255,138,61,.15));margin-bottom:14px;overflow:hidden}
+.stage svg{width:150px;height:150px;animation:float 2.6s ease-in-out infinite,zoom .6s cubic-bezier(.2,1.5,.4,1)}
+@keyframes float{50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes zoom{from{transform:scale(.2) rotate(-25deg);opacity:0}}
+h1{margin:6px 0;font-size:26px;text-align:center}
+h2{margin:0 0 12px;font-size:19px;text-align:center}
+p{color:var(--mute);line-height:1.5}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{font:inherit;font-weight:700;font-size:17px;padding:14px 8px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;transition:transform .15s,border-color .15s;animation:pop .4s backwards}
+.opt:nth-child(2){animation-delay:.06s}.opt:nth-child(3){animation-delay:.12s}.opt:nth-child(4){animation-delay:.18s}
+.opt:hover:not(:disabled){transform:translateY(-3px);border-color:var(--brand)}
+.opt.ok{background:var(--ok);border-color:var(--ok);color:#fff;animation:jump .5s}
+.opt.bad{background:var(--bad);border-color:var(--bad);color:#fff;animation:shake .45s}
+.opt:disabled{cursor:default}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes jump{40%{transform:scale(1.1)}}
+.btn{display:block;width:100%;margin-top:14px;padding:14px;border:0;border-radius:14px;background:var(--brand);color:#fff;font:inherit;font-weight:800;font-size:17px;cursor:pointer;animation:pop .35s}
+.btn:active{transform:scale(.97)}
+.why{margin-top:12px;padding:12px;border-radius:12px;background:rgba(108,76,245,.1);font-size:15px;line-height:1.45;animation:pop .35s}
+.big{font-size:64px;text-align:center;animation:float 2s infinite}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0 14px}
+.chip{font:inherit;font-weight:700;padding:9px 14px;border-radius:20px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;transition:.15s}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff;transform:scale(1.06)}
+.lbl{text-align:center;font-weight:800;font-size:14px;color:var(--mute);margin-top:6px}
+.tbar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.tbar i{display:block;height:100%;width:100%;background:var(--ok);transition:width .1s linear,background .3s}
+.tbar.low i{background:var(--bad)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:9}
+.hide{display:none}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="app">
+  <div class="top">
+    <div class="bar"><i id="prog"></i></div>
+    <div class="pill" id="score">⭐ 0</div>
+    <div class="pill" id="streak">🔥 0</div>
+    <div class="pill" id="mute" title="Som">🔊</div>
+  </div>
+  <div id="view"></div>
+</div>
+<script>
+// Símbolos em SVG/emoji (ilustrações simplificadas, não são os logotipos oficiais)
+const E=(e,bg="rgba(108,76,245,.15)")=>`<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="${bg}"/><text x="60" y="82" font-size="68" text-anchor="middle">${e}</text></svg>`;
+const N=n=>`<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="#6c4cf5"/><text x="60" y="78" font-size="52" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">${n}</text></svg>`;
+const T=c=>{c=c.split(",");return`<svg viewBox="0 0 120 120"><defs><clipPath id="cp"><circle cx="60" cy="60" r="54"/></clipPath></defs><g clip-path="url(#cp)">${c.map((x,k)=>`<rect x="${k*40}" width="40" height="120" fill="${x}"/>`).join("")}</g></svg>`};
+const SV={
+tu:`<svg viewBox="0 0 120 120"><ellipse cx="52" cy="72" rx="26" ry="38" fill="#262626" transform="rotate(-18 52 72)"/><ellipse cx="62" cy="58" rx="13" ry="17" fill="#fff"/><circle cx="64" cy="40" r="14" fill="#262626"/><path d="M70 34Q116 26 112 58Q92 62 72 50Z" fill="#ff9d1c"/><path d="M72 46Q96 50 111 55Q92 62 72 50Z" fill="#e5484d"/><circle cx="66" cy="38" r="4.5" fill="#fff"/><circle cx="67" cy="38" r="2" fill="#000"/></svg>`,
+fo:`<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="#d62828"/><g fill="#ffd60a" stroke="#ffd60a"><path d="M30 92L82 40" stroke-width="7" stroke-linecap="round"/><rect x="66" y="26" width="30" height="14" rx="3" transform="rotate(45 81 33)" stroke="none"/><path d="M38 38Q70 20 88 54" fill="none" stroke-width="7" stroke-linecap="round"/></g></svg>`,
+gi:(()=>{let p="";for(let i=0;i<14;i++)p+=`<ellipse cx="60" cy="24" rx="9" ry="20" fill="#ffc300" transform="rotate(${i*360/14} 60 60)"/>`;return`<svg viewBox="0 0 120 120">${p}<circle cx="60" cy="60" r="20" fill="#6b3f1d"/></svg>`})(),
+est:`<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="rgba(214,40,40,.15)"/><polygon points="60,14 73,48 109,48 80,69 91,104 60,83 29,104 40,69 11,48 47,48" fill="#d62828"/></svg>`,
+c:c=>`<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="${c}"/><circle cx="44" cy="44" r="12" fill="#fff" opacity=".3"/></svg>`};
+const V=v=>SV[v]||(v[0]=="e"?E(v.slice(2)):v[0]=="c"?SV.c(v.slice(2)):v[0]=="n"?N(v.slice(2)):T(v.slice(2)));
+const PL={BR:["PT","PSDB","MDB","PL","PSOL","PCdoB","PV","Novo","PDT","PSB","PSD","PP","União Brasil","Rede","Cidadania","Podemos","Republicanos","Solidariedade"],
+COL:["Vermelho","Azul","Verde","Laranja","Amarelo","Roxo","Preto","Rosa"],
+NUM:["10","11","12","13","15","16","18","20","21","22","23","27","29","30","35","40","43","44","45","50","55","65","70","77","80"],
+US:["Democrata","Republicano","Libertário","Verde"],UK:["Trabalhista","Conservador","Liberal Democrata","Verde","SNP"],DE:["CDU","SPD","Verdes","FDP","AfD"],
+CA:["Liberal","Conservador","NDP","Bloco Quebequense"],IN:["BJP","Congresso Nacional Indiano","AAP","CPI(M)"],MX:["PRI","PAN","Morena","PRD"],
+PTG:["PS","PSD","PCP","Chega","Bloco de Esquerda"],FR:["Partido Socialista","Les Républicains","Rassemblement National","Renaissance"],
+WD:["Rússia Unida","Partido Comunista da China","ANC","BJP"]};
+const Q=[],q=(d,v,t,a,p,w)=>Q.push({d,v,t,a,p,w:w||"Resposta certa: "+a+"."});
+// ===== FÁCIL (30) =====
+q(1,"tu","De qual partido brasileiro é este símbolo?","PSDB","BR","O tucano é o símbolo histórico do PSDB.");
+q(1,"est","Qual partido brasileiro usa uma estrela vermelha?","PT","BR","A estrela vermelha é o símbolo do PT.");
+q(1,"c:#ff7a00","Qual partido brasileiro é identificado pelo laranja?","Novo","BR","O Partido Novo adotou o laranja.");
+q(1,"gi","Qual partido brasileiro usa um girassol?","PV","BR","O girassol representa o Partido Verde.");
+q(1,"fo","Esta bandeira pertence a qual partido brasileiro?","PCdoB","BR","Foice e martelo aparecem na bandeira do PCdoB.");
+q(1,"e:🫏","Qual partido dos EUA tem o burro como símbolo?","Democrata","US","O burro é o símbolo tradicional dos democratas.");
+q(1,"e:🐘","Qual partido dos EUA tem o elefante como símbolo?","Republicano","US","O elefante é o símbolo tradicional dos republicanos.");
+q(1,"e:🌹","Qual partido britânico usa uma rosa vermelha?","Trabalhista","UK","A rosa vermelha é o emblema do Labour.");
+q(1,"e:🎨","Qual cor representa o Partido Republicano nos EUA?","Vermelho","COL");
+q(1,"e:🎨","Qual cor representa o Partido Democrata nos EUA?","Azul","COL");
+q(1,"e:🎨","Qual cor é tradicional do PT?","Vermelho","COL");
+q(1,"n:13","Qual partido brasileiro tem o número 13?","PT","BR","O número do PT nas urnas é 13.");
+q(1,"e:🔤","O que significa a sigla PT?","Partido dos Trabalhadores",["Partido Trabalhista","Partido da Terra","Partido dos Técnicos"]);
+q(1,"e:🎨","Qual cor está associada ao PV?","Verde","COL");
+q(1,"e:🎨","Qual a cor do Partido Conservador britânico?","Azul","COL");
+q(1,"e:🎨","Qual a cor do Partido Trabalhista britânico?","Vermelho","COL");
+q(1,"e:🎨","Qual a cor do Partido Liberal do Canadá?","Vermelho","COL");
+q(1,"e:🎨","Qual a cor do Partido Conservador do Canadá?","Azul","COL");
+q(1,"e:🎨","Qual cor é símbolo dos Verdes na Alemanha?","Verde","COL");
+q(1,"e:🎨","Qual a cor tradicional do SPD alemão?","Vermelho","COL");
+q(1,"e:🎨","Qual a cor do PSOE, na Espanha?","Vermelho","COL");
+q(1,"e:🎨","Qual a cor do PP espanhol?","Azul","COL");
+q(1,"e:🎨","Qual a cor do Partido Trabalhista da Austrália?","Vermelho","COL");
+q(1,"e:🎨","Qual a cor do Partido Liberal da Austrália?","Azul","COL");
+q(1,"e:🎨","Qual a cor do Partido Liberal Democrata britânico?","Amarelo","COL");
+q(1,"e:🎨","Qual a cor do NDP, no Canadá?","Laranja","COL");
+q(1,"e:🎨","Qual a cor do FDP, na Alemanha?","Amarelo","COL");
+q(1,"e:🎨","Qual a cor da CDU, na Alemanha?","Preto","COL");
+q(1,"e:🐘","Qual partido dos EUA é chamado de GOP?","Republicano","US","GOP vem de Grand Old Party.");
+q(1,"e:🔤","O que significa a sigla PV?","Partido Verde",["Partido da Vida","Partido Vermelho","Partido Verdadeiro"]);
+// ===== MÉDIO (30) =====
+[["PL","22"],["PSDB","45"],["MDB","15"],["PDT","12"],["PSB","40"],["PSOL","50"],["PCdoB","65"],["Novo","30"],["PV","43"],["União Brasil","44"],["PSD","55"]].forEach(x=>q(2,"n:"+x[1],"Qual o número do "+x[0]+" nas urnas?",x[1],"NUM","O número do "+x[0]+" é "+x[1]+"."));
+q(2,"e:🔤","O que significa a sigla PSDB?","Partido da Social Democracia Brasileira",["Partido Social Democrata Brasileiro","Partido Socialista Democrático Brasileiro","Partido da Social Democracia Brasil"]);
+q(2,"e:🔤","O que significa a sigla MDB?","Movimento Democrático Brasileiro",["Movimento Democrata Brasil","Movimento Distrital Brasileiro","Mobilização Democrática do Brasil"]);
+q(2,"e:🔤","O que significa a sigla PCdoB?","Partido Comunista do Brasil",["Partido Comunista Brasileiro","Partido Camponês do Brasil","Partido Comum do Brasil"],"Não confunda com o PCB, Partido Comunista Brasileiro.");
+q(2,"e:🔤","O que significa a sigla PSOL?","Partido Socialismo e Liberdade",["Partido Socialista e Libertário","Partido Social Operário e Liberal","Partido Solidário e Liberal"]);
+q(2,"e:🤝","Quem forma a Federação Brasil da Esperança?","PT, PCdoB e PV",["PSDB e Cidadania","PSOL e Rede","União e PP"],"As outras opções são outras federações.");
+q(2,"e:🌳","Qual partido britânico usa uma árvore no logotipo?","Conservador","UK","A árvore está na identidade conservadora desde 2006.");
+q(2,"e:🐦","Qual partido britânico tem um pássaro amarelo como emblema?","Liberal Democrata","UK","É o Bird of Liberty, o pássaro da liberdade.");
+q(2,"gi","Qual partido alemão usa o girassol?","Verdes","DE","O girassol é símbolo do Die Grünen.");
+q(2,"c:#ff7a00","Qual partido canadense é identificado pelo laranja?","NDP","CA","O NDP é o partido laranja do Canadá.");
+q(2,"e:🐻","Qual partido russo é associado a um urso?","Rússia Unida","WD","O urso é símbolo do Rússia Unida.");
+q(2,"e:🪷","Qual partido indiano tem o lótus como símbolo?","BJP","IN","O lótus é o símbolo do BJP.");
+q(2,"e:✋","Qual partido indiano usa a mão como símbolo?","Congresso Nacional Indiano","IN","A mão é o símbolo do Congresso.");
+q(2,"t:#0a8f3c,#ffffff,#d62828","O verde, branco e vermelho estão no emblema de qual partido mexicano?","PRI","MX","O PRI usa o tricolor da bandeira.");
+q(2,"e:🎨","Qual cor identifica o PAN, no México?","Azul","COL");
+q(2,"fo","Qual partido português usa a foice e o martelo?","PCP","PTG","O PCP é o Partido Comunista Português.");
+q(2,"e:🎨","Qual cor identifica o PSD, em Portugal?","Laranja","COL");
+q(2,"e:🎨","Qual cor identifica o Vox, na Espanha?","Verde","COL");
+q(2,"e:🎨","Qual cor identifica o Podemos, na Espanha?","Roxo","COL");
+q(2,"e:🌹","Qual partido francês usa uma rosa no emblema?","Partido Socialista","FR","A rosa é emblema do Partido Socialista.");
+// ===== DIFÍCIL (30) =====
+q(3,"e:🤝","O PSDB formou federação com qual partido?","Cidadania",["PV","MDB","Podemos"],"A Federação PSDB Cidadania reúne os dois.");
+q(3,"e:🤝","O Cidadania formou federação com qual partido?","PSDB",["PT","PSB","PSD"],"A Federação PSDB Cidadania reúne os dois.");
+q(3,"e:🤝","O PSOL formou federação com qual partido?","Rede",["PT","PDT","PSB"],"A Federação PSOL Rede reúne os dois.");
+q(3,"e:🤝","A Rede formou federação com qual partido?","PSOL",["PT","PV","PSB"],"A Federação PSOL Rede reúne os dois.");
+q(3,"e:🤝","O PRD formou federação com qual partido?","Solidariedade",["PP","Podemos","Avante"],"É a Federação Renovação Solidária.");
+q(3,"e:🤝","O Solidariedade formou federação com qual partido?","PRD",["PL","Avante","Novo"],"É a Federação Renovação Solidária.");
+q(3,"e:🤝","O União Brasil formou federação com qual partido?","PP",["PL","PSD","MDB"],"É a Federação União Progressista.");
+q(3,"e:🤝","O PP formou federação com qual partido?","União Brasil",["PL","PSD","Republicanos"],"É a Federação União Progressista.");
+q(3,"e:🤝","Que partido completa a federação com PT e PCdoB?","PV",["PSB","Rede","Cidadania"],"A federação é PT, PCdoB e PV.");
+q(3,"e:🤝","Que partido completa a federação com PT e PV?","PCdoB",["PSOL","Rede","PDT"],"A federação é PT, PCdoB e PV.");
+q(3,"e:🧬","O União Brasil nasceu da fusão de quais partidos?","DEM e PSL",["PTB e Patriota","PSDB e PSB","MDB e PP"],"A fusão foi aprovada em 2022.");
+q(3,"e:🧬","O PRD nasceu da fusão de quais partidos?","PTB e Patriota",["DEM e PSL","PPS e PV","PSC e PTN"]);
+q(3,"e:🧬","Qual partido se chamava PR até 2019?","PL",["PP","PSD","PRD"],"O PR passou a se chamar PL em 2019.");
+q(3,"e:🧬","Qual partido se chamava PPS até 2019?","Cidadania",["Podemos","Rede","Solidariedade"],"O PPS virou Cidadania em 2019.");
+[["Podemos","20"],["Republicanos","10"],["PP","11"],["Rede","18"],["Cidadania","23"]].forEach(x=>q(3,"n:"+x[1],"Qual partido brasileiro tem o número "+x[1]+"?",x[0],"BR","O número "+x[1]+" é do "+x[0]+"."));
+q(3,"n:16","Qual partido brasileiro tem o número 16?","PSTU",["PCO","PCB","UP"]);
+q(3,"n:80","Qual partido brasileiro tem o número 80?","UP",["PCO","PCB","PSTU"],"UP é Unidade Popular.");
+q(3,"n:27","Qual partido brasileiro tem o número 27?","DC",["PRD","PMB","Agir"],"DC é Democracia Cristã.");
+q(3,"n:70","Qual partido brasileiro tem o número 70?","Avante",["PRD","Agir","Mobiliza"]);
+q(3,"e:💡","Qual partido turco usa uma lâmpada?","AKP",["CHP","MHP","İYİ"]);
+q(3,"e:🧹","Qual partido indiano usa uma vassoura?","AAP","IN","É o Aam Aadmi Party.");
+q(3,"e:🏹","Qual partido turco usa seis flechas?","CHP",["AKP","MHP","İYİ"]);
+q(3,"e:🔥","Qual partido francês tem uma chama tricolor no logotipo?","Rassemblement National","FR");
+q(3,"e:🎨","Qual cor identifica a Morena, no México?","Vinho (guinda)",["Verde","Azul","Laranja"]);
+q(3,"e:🎨","Qual cor identifica o DPP, em Taiwan?","Verde","COL");
+q(3,"e:🎨","Qual cor identifica o KMT, em Taiwan?","Azul","COL");
+const LV={1:{n:"Fácil",e:"😊",t:20},2:{n:"Médio",e:"🤔",t:15},3:{n:"Difícil",e:"🔥",t:10}};
+let i=0,score=0,hits=0,streak=0,muted=false,ac,deck=[],tm,left=0,mode="";
+const $=id=>document.getElementById(id),view=$("view");
+// Sons (Web Audio, sem arquivos externos)
+function tone(f,t,d,type="sine",v=.15){if(muted)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+t+d);o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+t);o.stop(ac.currentTime+t+d)}catch(e){}}
+const sfx={ok:()=>[523,659,784,1047].forEach((f,k)=>tone(f,k*.08,.25)),bad:()=>{tone(180,0,.25,"sawtooth",.12);tone(130,.15,.35,"sawtooth",.12)},click:()=>tone(660,0,.08,"triangle"),win:()=>[523,659,784,659,784,1047,1319].forEach((f,k)=>tone(f,k*.11,.3,"triangle"))};
+$("mute").onclick=()=>{muted=!muted;$("mute").textContent=muted?"🔇":"🔊"};
+// Confete
+const cv=$("fx"),cx=cv.getContext("2d");let P=[];
+function size(){cv.width=innerWidth;cv.height=innerHeight}size();addEventListener("resize",size);
+function boom(n=90){for(let k=0;k<n;k++)P.push({x:innerWidth/2,y:innerHeight*.4,vx:(Math.random()-.5)*14,vy:-Math.random()*13-3,r:Math.random()*6+3,c:`hsl(${Math.random()*360},90%,60%)`,l:90})}
+(function loop(){cx.clearRect(0,0,cv.width,cv.height);P=P.filter(p=>p.l-->0);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.4;cx.fillStyle=p.c;cx.fillRect(p.x,p.y,p.r,p.r*1.6)});requestAnimationFrame(loop)})();
+function shuffle(a){return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1])}
+const lvl=d=>shuffle(Q.filter(x=>x.d==d));
+function start(){clearInterval(tm);$("streak").textContent="🔥 0";$("prog").style.width="0";$("score").textContent="⭐ 0";
+const M=[["quick","⚡ Quiz rápido · 10 perguntas"],["1","😊 Fácil · 30 perguntas"],["2","🤔 Médio · 30 perguntas"],["3","🔥 Difícil · 30 perguntas"],["all","📚 Completo · 90 perguntas"]];
+view.innerHTML=`<div class="card"><div class="big">🗳️</div><h1>Quiz dos símbolos</h1><p style="text-align:center">Símbolos, cores, números e siglas de partidos do Brasil e do mundo. Responda rápido para ganhar mais pontos!</p><div class="opts" style="grid-template-columns:1fr">${M.map(m=>`<button class="opt" data-m="${m[0]}">${m[1]}</button>`).join("")}</div></div>`;
+view.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{sfx.click();play(b.dataset.m)})}
+function play(m){mode=m;i=0;score=0;hits=0;streak=0;
+deck=m=="quick"?shuffle(Q).slice(0,10):m=="all"?[...lvl(1),...lvl(2),...lvl(3)]:lvl(+m);show()}
+function show(){const q=deck[i],L=LV[q.d];let o=shuffle([q.a,...(Array.isArray(q.p)?q.p:shuffle(PL[q.p].filter(x=>x!==q.a)).slice(0,3))]);
+if(q.d==1)o=o.filter((x,k)=>x===q.a||k!==o.findIndex(y=>y!==q.a));
+view.innerHTML=`<div class="card"><div class="lbl" style="margin:0 0 8px">${L.e} ${L.n} · Pergunta ${i+1} de ${deck.length}</div><div class="tbar" id="tb"><i id="ti"></i></div><div class="stage">${V(q.v)}</div><h2>${q.t}</h2><div class="opts" style="${o.length==3?"grid-template-columns:1fr":""}">${o.map(x=>`<button class="opt">${x}</button>`).join("")}</div><div id="fb"></div></div>`;
+view.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b,q));
+const T=L.t;left=T;clearInterval(tm);
+tm=setInterval(()=>{left-=.1;$("ti").style.width=Math.max(0,left/T*100)+"%";if(left<=T*.3){$("tb").classList.add("low");if(Math.abs(left-Math.round(left))<.05&&left>0)tone(880,0,.06,"square",.06)}if(left<=0){clearInterval(tm);answer(null,q)}},100)}
+function answer(b,q){clearInterval(tm);const all=[...view.querySelectorAll(".opt")];all.forEach(x=>x.disabled=true);
+const right=b&&b.textContent===q.a;
+if(right){score+=10*q.d+Math.ceil(left);hits++;streak++;b.classList.add("ok");sfx.ok();boom(streak>2?160:80)}else{streak=0;if(b)b.classList.add("bad");sfx.bad()}
+all.find(x=>x.textContent===q.a).classList.add("ok");
+$("streak").textContent="🔥 "+streak;$("score").textContent="⭐ "+score;$("prog").style.width=((i+1)/deck.length*100)+"%";
+$("fb").innerHTML=`<div class="why">${right?"✅ Acertou! ":b?"❌ Quase! ":"⏰ O tempo acabou! "}${q.w}</div><button class="btn" id="nx">${i<deck.length-1?"Próxima":"Ver resultado"}</button>`;
+$("nx").onclick=()=>{sfx.click();i++;i<deck.length?show():end()}}
+function end(){sfx.win();boom(220);const n=deck.length;
+const m=hits==n?["🏆","Perfeito! Você é craque nos símbolos."]:hits>=n*.6?["🎉","Muito bem! Você conhece bastante."]:["📚","Bom começo! Tente de novo."];
+view.innerHTML=`<div class="card"><div class="big">${m[0]}</div><h1>${hits} de ${n} · ${score} pts</h1><p style="text-align:center">${m[1]}</p><button class="btn" id="again">Jogar de novo</button><button class="btn" id="menu" style="background:var(--line);color:var(--ink)">Voltar ao menu</button></div>`;
+$("again").onclick=()=>{sfx.click();play(mode)};$("menu").onclick=()=>{sfx.click();start()}}
+start();
+</script>
+</body>
+</html>
